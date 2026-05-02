@@ -1,0 +1,121 @@
+name: wave-agent
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wave-agent-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-waveagent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-waveagent}
+      POSTGRES_DB: ${POSTGRES_DB:-waveagent}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-waveagent} -d ${POSTGRES_DB:-waveagent}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: wave-agent-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  alembic-migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wave-agent-migrate
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-waveagent}:${POSTGRES_PASSWORD:-waveagent}@postgres:5432/${POSTGRES_DB:-waveagent}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wave-agent-backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-waveagent}:${POSTGRES_PASSWORD:-waveagent}@postgres:5432/${POSTGRES_DB:-waveagent}
+      REDIS_URL: redis://redis:6379/0
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DEEPINFRA_API_KEY: ${DEEPINFRA_API_KEY:-}
+      DEEPINFRA_BASE_URL: ${DEEPINFRA_BASE_URL:-https://api.deepinfra.com/v1/openai}
+      DEEPINFRA_MODEL_FAST: ${DEEPINFRA_MODEL_FAST:-deepseek-ai/DeepSeek-V3.1}
+      DEEPINFRA_MODEL_SMART: ${DEEPINFRA_MODEL_SMART:-deepseek-ai/DeepSeek-V3.1}
+      DEEPINFRA_INPUT_PRICE_PER_MTOK: ${DEEPINFRA_INPUT_PRICE_PER_MTOK:-0.27}
+      DEEPINFRA_OUTPUT_PRICE_PER_MTOK: ${DEEPINFRA_OUTPUT_PRICE_PER_MTOK:-1.10}
+      LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      MAX_RUN_COST_USD: ${MAX_RUN_COST_USD:-0.50}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - storage:/app/storage
+      - ./samples:/app/samples:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      alembic-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=2).status == 200 else 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:8000}
+    container_name: wave-agent-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:8000}
+      NODE_ENV: production
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:
+  storage:
+

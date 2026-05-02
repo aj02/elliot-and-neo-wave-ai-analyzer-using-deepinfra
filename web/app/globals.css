@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/* wave-agent — calm, professional palette. Dark is the default (trader convention).
+   Light mode is opt-in via the next-themes toggle (data-theme="light"). */
+@theme {
+  --color-bg: oklch(0.18 0.012 250);
+  --color-fg: oklch(0.94 0.01 250);
+  --color-muted: oklch(0.62 0.012 250);
+  --color-border: oklch(0.28 0.012 250);
+  --color-card: oklch(0.22 0.012 250);
+  --color-accent: oklch(0.78 0.13 70); /* amber */
+  --color-accent-fg: oklch(0.18 0.012 250);
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+}
+
+[data-theme="light"] {
+  --color-bg: oklch(0.99 0.003 250);
+  --color-fg: oklch(0.21 0.012 250);
+  --color-muted: oklch(0.46 0.012 250);
+  --color-border: oklch(0.88 0.005 250);
+  --color-card: oklch(0.97 0.005 250);
+  --color-accent: oklch(0.66 0.14 60);
+  --color-accent-fg: oklch(0.99 0.003 250);
+}
+
+html,
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
