@@ -120,7 +120,11 @@ export function PriceChart(props: PriceChartProps) {
     chartRef.current = chart;
     candleSeriesRef.current = candles;
     return () => {
-      chart.remove();
+      try {
+        chart.remove();
+      } catch {
+        /* already removed */
+      }
       chartRef.current = null;
       candleSeriesRef.current = null;
     };
@@ -209,7 +213,17 @@ export function PriceChart(props: PriceChartProps) {
     removed.push({ remove: () => chart.removeSeries(upper) });
     removed.push({ remove: () => chart.removeSeries(lower) });
     return () => {
-      for (const r of removed) r.remove();
+      // Guard: on unmount the main effect's cleanup may have already destroyed
+      // the chart; calling removeSeries on a dead chart throws into Lightweight
+      // Charts' internals and the error bubbles up the React tree, taking out
+      // whatever sibling tab is mounting next.
+      for (const r of removed) {
+        try {
+          r.remove();
+        } catch {
+          /* chart already torn down — nothing to remove */
+        }
+      }
     };
   }, [bars, channelLines, showChannel]);
 
@@ -229,7 +243,13 @@ export function PriceChart(props: PriceChartProps) {
       }),
     );
     return () => {
-      for (const h of handles) series.removePriceLine(h);
+      for (const h of handles) {
+        try {
+          series.removePriceLine(h);
+        } catch {
+          /* series destroyed during unmount */
+        }
+      }
     };
   }, [fibonacciRetracements, showFibs]);
 
@@ -249,7 +269,13 @@ export function PriceChart(props: PriceChartProps) {
       }),
     );
     return () => {
-      for (const h of handles) series.removePriceLine(h);
+      for (const h of handles) {
+        try {
+          series.removePriceLine(h);
+        } catch {
+          /* series destroyed during unmount */
+        }
+      }
     };
   }, [invalidationLevels, showInvalidation]);
 

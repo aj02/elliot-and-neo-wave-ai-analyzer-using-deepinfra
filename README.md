@@ -26,6 +26,32 @@ The intellectual core is the deterministic / LLM split. **Python computes everyt
 
 ---
 
+## Screenshots
+
+All shots below are from a single live run on monthly NIFTY 50 (1990–2026, 430 bars) using DeepSeek-V3.1 via DeepInfra. **Total spend for the run: $0.003150** across three live LLM calls. Subsequent runs on the same data hit the agent cache and complete in seconds at zero cost.
+
+**1. Upload.** Drag-drop one CSV per timeframe. Per-file timeframe selector (no auto-detection — that's brittle around weekends/holidays). Inline validation with actionable error messages; missing `volume` and aliased `Date` columns are accepted with warnings.
+
+![Upload page](docs/screenshots/01-upload.png)
+
+**2. Live analysis.** Per-timeframe Elliott + NEOWave agents run in parallel. Events stream over WebSocket; the page shows queued → running → completed transitions for each agent, plus the synthesis stage. Auto-redirects to the report on completion.
+
+![Live analysis page](docs/screenshots/02-analyze.png)
+
+**3. Report — Overview.** Ranked scenarios from the cross-timeframe synthesis agent. Each scenario references real pivot indices from the data, identifies cross-framework agreement (Elliott vs NEOWave), and surfaces the **deterministic invalidation level** computed in Python — the LLM never generates these numbers.
+
+![Report — Overview](docs/screenshots/03-report-overview.png)
+
+**4. Report — per-timeframe chart.** Interactive Lightweight Charts with pivot markers (HH / HL / LH / LL), channel lines, Fibonacci retracements, and a clearly-marked invalidation level. Toggle between surviving counts via the count selector (here: `E0` impulse wave 5, `E1` zigzag wave C). Below the chart: the active count's wave-by-wave structure (each wave mapped to its start/end pivot indices) and the **rule-compliance scorecard** — every Elliott rule (EW-H-1 through EW-H-3, EW-S-1, EW-S-2) checked against this count and shown explicitly. Bottom panel: deterministic structural snapshot (430 bars, 58 pivots, +43.5° channel slope, ATR(14) = 1491, etc.).
+
+![Report — 1M tab](docs/screenshots/04-report-timeframe.png)
+
+**5. Report — Methodology.** Documents the deterministic-vs-LLM split, lists every encoded rule, and itemises the per-agent cost breakdown. The cost line for this run: **elliott $0.001051 + neowave $0.000944 + synthesis $0.001155 = $0.003150 total** on DeepSeek-V3.1. This page is the audit trail anyone reviewing the project should land on.
+
+![Report — Methodology](docs/screenshots/05-report-methodology.png)
+
+---
+
 ## Get running in 3 minutes
 
 You need Docker Desktop (or Docker Engine + Compose v2) and an Anthropic API key.
