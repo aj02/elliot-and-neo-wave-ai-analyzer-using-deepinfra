@@ -41,6 +41,7 @@ from app.schemas.report import (
 )
 from app.schemas.structure import StructureSummary
 from app.services.cache import AgentCache
+from app.services.pivot_decorator import decorate_synthesis, decorate_validation_outcome
 from app.services.validator import validate_timeframe
 
 
@@ -199,6 +200,10 @@ async def run_pipeline(
                              candidates=len(n_out.counts), cache_hit=n_cost.cache_hit).model_dump(mode="json"))
 
         outcome = validate_timeframe(e_out, n_out, summary.pivots, timeframe=tf_label)
+        # Replace bare `#<idx>` references in count rationales with the actual
+        # price + date pulled from the StructureSummary. Pure deterministic —
+        # the LLM never sees these values, they come from the OHLCV data.
+        outcome = decorate_validation_outcome(outcome, summary)
         await on_event(
             event(type="validation_completed", run_id=run_id, timeframe=tf_label,
                   elliott_surviving=len(outcome.elliott_surviving),
@@ -215,6 +220,8 @@ async def run_pipeline(
     parts = [(tr.structure, tr.validation) for tr in timeframe_reports]
     await on_event(event(type="synthesis_started", run_id=run_id).model_dump(mode="json"))
     synthesis_report, syn_cost = await run_synthesis_agent(parts, deps=deps, cache=cache)
+    # Same pivot-context decoration on the synthesis-scenario texts.
+    synthesis_report = decorate_synthesis(synthesis_report, parts)
     cost_records.append(syn_cost)
     await on_event(
         event(type="synthesis_completed", run_id=run_id,

@@ -58,6 +58,13 @@ REQUIRED FRAMING. Use:
   "wave N retraces M% of wave K from pivot #i to pivot #j"
   "alternate count is preferred to primary because pivot #k shows ..."
 
+PIVOT REFERENCE STYLE — ALWAYS use the `#` prefix when referencing a pivot, \
+even inside wave-range parentheticals or compact constructions. The `#` is \
+load-bearing: a deterministic post-processor replaces `#<idx>` with the actual \
+price + date so a human reader can audit your reasoning. Bare numbers like \
+"(244-296)" will not be decorated and are unreadable. Always write \
+"(#244 → #296)" instead.
+
 FORBIDDEN LANGUAGE anywhere in any rationale:
   buy · sell · long · short · target price · predict · forecast · recommend ·
   high probability · likely to · should rally · should drop
@@ -97,6 +104,11 @@ records. Each count must specify:
                        monotony, channeling, or time relationships explicitly
                        when applicable. Reference pivot positions by number.
 
+PIVOT REFERENCE STYLE — ALWAYS use the `#` prefix when referencing a pivot. \
+Even in wave-range parentheticals: write "(#222 → #244)", not "(222-244)". A \
+deterministic post-processor swaps `#<idx>` for the real price + date so the \
+human reader gets a readable trace.
+
 FORBIDDEN LANGUAGE: buy, sell, long, short, target price, predict, forecast, \
 recommend, high probability.
 
@@ -125,7 +137,14 @@ INPUT FORMAT — for each timeframe in the input:
 
 PIVOT INDEX SYNTAX inside StructureSummary: each pivot is rendered as \
 `#<idx>:<U|D><swing%>/<bars><label>...`. Use these `<idx>` integers verbatim \
-when you reference pivots.
+when you reference pivots. ALWAYS keep the `#` prefix — even inside \
+wave-range parentheticals like "(#244 → #296)". A deterministic post-\
+processor replaces `#<idx>` with the real price and date so a human reader \
+can audit the count; bare numbers like "(244-296)" are NOT decorated and \
+confuse readers. Do not put speculative prices next to pivot references — \
+the post-processor adds the actual price; your "at X" parenthetical risks \
+appearing alongside the real price and looking like a contradiction if X is \
+guessed wrong.
 
 TASKS — produce 1–3 ranked SynthesisScenario objects:
 

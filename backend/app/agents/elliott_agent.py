@@ -59,16 +59,16 @@ def _build_agent(model, system_prompt: str = ELLIOTT_AGENT_SYSTEM_PROMPT):
     the module path don't need pydantic-ai installed."""
     from pydantic_ai import Agent
 
-    # retries=0 — fail fast on validation errors instead of retry-storms.
-    # Some open-weights models (Kimi-K2 in particular) emit tool-call output
-    # that fails strict schema validation; PydanticAI then retries with the
-    # previous response in context, which balloons cost and hits HTTP timeouts.
-    # The Validator filters malformed counts downstream anyway.
+    # retries=1 — one cycle of "your output didn't validate, fix it" is enough
+    # for DeepSeek-V3.1 to clean up small overflows (e.g. rationale slightly
+    # over the schema cap). The 90s per-request HTTP timeout in `llm.py` caps
+    # the worst case, so we no longer need to fail-fast at retries=0 the way
+    # we did with Kimi's tool-call retry storms.
     return Agent(
         model=model,
         output_type=ElliottAgentOutput,
         system_prompt=system_prompt,
-        retries=0,
+        retries=1,
         name="elliott",
     )
 

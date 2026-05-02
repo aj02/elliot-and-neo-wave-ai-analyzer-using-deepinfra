@@ -18,12 +18,19 @@ export default function AboutPage() {
         </h2>
         <p>
           wave-agent runs deterministic Python preprocessing on uploaded OHLCV
-          CSVs, then orchestrates specialised LLM agents (Anthropic Claude
-          Haiku for per-timeframe wave-rule agents, Sonnet for the cross-
-          timeframe synthesis agent) to propose ranked Elliott Wave + NEOWave
-          structural interpretations. The agents only see compact
-          ~80&ndash;150-token summaries of pivots, swings, channels, and
-          Fibonacci zones — never raw price data.
+          CSVs, then orchestrates schema-bound LLM agents to propose ranked
+          Elliott Wave + NEOWave structural interpretations. The agents only
+          see compact ~80&ndash;150-token summaries of pivots, swings,
+          channels, and Fibonacci zones — never raw price data.
+        </p>
+        <p>
+          Three providers are wired up via a single env switch
+          (<code>LLM_PROVIDER</code>):
+          DeepInfra (DeepSeek-V3.1, Kimi-K2, Llama, GLM, …),
+          Anthropic (Claude Haiku for per-timeframe agents + Sonnet for the
+          single cross-timeframe synthesis call), and OpenAI
+          (gpt-4o-mini + gpt-4o). The same prompts, schemas, and validator
+          pipeline run regardless of which model serves the call.
         </p>
         <p>
           Every numeric level in the final report (invalidation prices,
@@ -31,7 +38,11 @@ export default function AboutPage() {
           The LLM&apos;s job is interpretive ranking and cross-timeframe
           alignment, not arithmetic. Wave counts that violate hard rules
           (Frost &amp; Prechter / Glenn Neely) are rejected by the
-          deterministic Validator before they reach the user.
+          deterministic Validator before they reach the user. A second
+          deterministic post-processor replaces every <code>#&lt;idx&gt;</code>
+          {" "}pivot reference in the LLM&apos;s prose with the actual price
+          and date pulled from the StructureSummary, so a human reader can
+          audit the count without learning the system&apos;s internal indexing.
         </p>
       </section>
 
@@ -59,10 +70,30 @@ export default function AboutPage() {
           Token economics
         </h2>
         <p>
-          A typical 5-timeframe analysis runs ~10 Haiku calls + 1 Sonnet call,
-          totalling roughly $0.02&ndash;$0.05 per run. Identical inputs hit a
-          Redis-backed cache and skip the LLM entirely. A configurable cap
-          rejects pathologically expensive runs before any LLM call is made.
+          A typical single-timeframe analysis runs 2 fast-tier agent calls
+          (Elliott + NEOWave) + 1 smart-tier synthesis call. Indicative cost
+          per run on a real 1990&ndash;2026 NIFTY 50 monthly dataset:
+        </p>
+        <ul className="ml-4 list-disc space-y-1">
+          <li>
+            <strong className="text-[color:var(--color-fg)]">DeepInfra (DeepSeek-V3.1):</strong>{" "}
+            ~$0.003&ndash;$0.005 per run
+          </li>
+          <li>
+            <strong className="text-[color:var(--color-fg)]">OpenAI (gpt-4o-mini + gpt-4o):</strong>{" "}
+            ~$0.01&ndash;$0.03 per run
+          </li>
+          <li>
+            <strong className="text-[color:var(--color-fg)]">Anthropic (Haiku + Sonnet):</strong>{" "}
+            ~$0.02&ndash;$0.05 per run
+          </li>
+        </ul>
+        <p>
+          Identical inputs hit a Redis-backed cache (content-keyed by
+          SHA-256(StructureSummary + agent name + model name), 7-day TTL)
+          and skip the LLM entirely. A configurable cap
+          (<code>MAX_RUN_COST_USD</code>) rejects pathologically expensive
+          runs before any LLM call is made.
         </p>
       </section>
 

@@ -80,10 +80,12 @@ class ElliottCount(BaseModel):
     waves: list[WaveSegment]
     current_wave: str = Field(description="Label of the wave currently in progress.")
     rationale: str = Field(
-        max_length=240,
+        max_length=320,
         description=(
-            "≤ 240-char structural rationale. Must reference pivot indices, never "
-            "make a buy/sell statement, never quote 'targets'."
+            "≤ 320-char structural rationale. Must reference pivot indices using "
+            "the `#<idx>` form (the deterministic decorator swaps these for the "
+            "real price + date). Never make a buy/sell statement, never quote "
+            "'targets'."
         ),
     )
 
@@ -100,7 +102,7 @@ class NeowaveCount(BaseModel):
     current_position: str = Field(
         description="Where the present moment falls within the pattern (e.g. 'in m5')."
     )
-    rationale: str = Field(max_length=240)
+    rationale: str = Field(max_length=320)
 
 
 class CandidateCounts(BaseModel):

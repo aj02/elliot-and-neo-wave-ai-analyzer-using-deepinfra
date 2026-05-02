@@ -41,13 +41,12 @@ def _filter_output(output: NeowaveAgentOutput) -> NeowaveAgentOutput:
 def _build_agent(model, system_prompt: str = NEOWAVE_AGENT_SYSTEM_PROMPT):
     from pydantic_ai import Agent
 
-    # retries=0 — fail fast on validation errors. See elliott_agent.py for
-    # the rationale; the Validator filters malformed counts downstream.
+    # retries=1 — see elliott_agent.py. 90s HTTP timeout caps worst case.
     return Agent(
         model=model,
         output_type=NeowaveAgentOutput,
         system_prompt=system_prompt,
-        retries=0,
+        retries=1,
         name="neowave",
     )
 
