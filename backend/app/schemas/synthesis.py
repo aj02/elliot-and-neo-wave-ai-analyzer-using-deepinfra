@@ -33,14 +33,17 @@ class SynthesisScenario(BaseModel):
     rank: Literal[1, 2, 3]
     label: Literal["Primary", "Alternate", "Counter"]
     summary: str = Field(
-        max_length=480,
+        max_length=900,
         description=(
             "Structural summary; must reference at least one pivot index. "
-            "Forbidden words: buy/sell/long/short/target/predict/forecast/recommend."
+            "Forbidden words: buy/sell/long/short/target/predict/forecast/recommend. "
+            "The LLM is prompted to keep this ≤ 480 chars; the post-processor "
+            "decorator expands `#<idx>` references with `<price> (<date>)` and "
+            "needs ~400 chars of headroom on top."
         ),
     )
-    cross_timeframe_alignment: str = Field(max_length=320)
-    cross_framework_agreement: str = Field(max_length=320)
+    cross_timeframe_alignment: str = Field(max_length=600)
+    cross_framework_agreement: str = Field(max_length=600)
     supporting: list[CountRef] = Field(
         default_factory=list,
         description="Surviving counts that compose this scenario.",

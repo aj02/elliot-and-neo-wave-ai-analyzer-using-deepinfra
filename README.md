@@ -30,7 +30,7 @@ The intellectual core is the deterministic / LLM split. **Python computes everyt
 
 All shots below are from a single live run on monthly NIFTY 50 (1990–2026, 430 bars) using DeepSeek-V3.1 via DeepInfra. **Total spend for the run: $0.003150** across three live LLM calls. Subsequent runs on the same data hit the agent cache and complete in seconds at zero cost.
 
-**1. Upload.** Drag-drop one CSV per timeframe. Per-file timeframe selector (no auto-detection — that's brittle around weekends/holidays). Inline validation with actionable error messages; missing `volume` and aliased `Date` columns are accepted with warnings.
+**1. Upload.** Drop up to 8 CSVs in one go — one per timeframe. The example below shows a five-timeframe NIFTY 50 upload (4h / 1h / 1D / 1W / 1M, totalling 380 KB). Per-file timeframe selector (no auto-detection — that's brittle around weekends/holidays). Inline validation with actionable error messages; missing `volume` and aliased `Date` columns are accepted with warnings.
 
 ![Upload page](docs/screenshots/01-upload.png)
 

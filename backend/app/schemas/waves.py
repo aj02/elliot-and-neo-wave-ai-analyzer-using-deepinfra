@@ -80,12 +80,14 @@ class ElliottCount(BaseModel):
     waves: list[WaveSegment]
     current_wave: str = Field(description="Label of the wave currently in progress.")
     rationale: str = Field(
-        max_length=320,
+        max_length=600,
         description=(
-            "≤ 320-char structural rationale. Must reference pivot indices using "
-            "the `#<idx>` form (the deterministic decorator swaps these for the "
-            "real price + date). Never make a buy/sell statement, never quote "
-            "'targets'."
+            "Structural rationale. The LLM is prompted to keep this ≤ 320 chars; "
+            "the post-processing decorator then expands `#<idx>` references into "
+            "`<price> (<date>)` (each replacement adds ~12-22 chars), which can "
+            "push the stored value past 320. The 600 cap is the runaway-output "
+            "guard, not the typical-case limit. Never make a buy/sell statement, "
+            "never quote 'targets'."
         ),
     )
 
@@ -102,7 +104,7 @@ class NeowaveCount(BaseModel):
     current_position: str = Field(
         description="Where the present moment falls within the pattern (e.g. 'in m5')."
     )
-    rationale: str = Field(max_length=320)
+    rationale: str = Field(max_length=600)  # see ElliottCount.rationale for sizing rationale
 
 
 class CandidateCounts(BaseModel):

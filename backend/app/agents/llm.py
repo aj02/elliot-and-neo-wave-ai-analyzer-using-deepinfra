@@ -123,13 +123,18 @@ def make_model(tier: ModelTier) -> tuple["Model", ModelHandle]:
             from pydantic_ai.models.openai import OpenAIModel  # type: ignore[no-redef]
         from pydantic_ai.providers.openai import OpenAIProvider
 
-        # Bound a single chat-completions HTTP call to 90s. Without this the
-        # OpenAI client uses its default (5min), which lets a hung tool-call
-        # parse loop on the model side burn the whole budget on one request.
+        # Per-tier HTTP read timeout. Fast-tier (per-timeframe Elliott + NEOWave)
+        # finishes in 30–90s on DeepSeek-V3.1 — 120s gives headroom. Smart-tier
+        # (the synthesis call) gets a 5-timeframe StructureSummary aggregate
+        # (~7k input chars) and DeepSeek-V3.1 takes longer for the larger
+        # context + structured output: 300s covers it. Without these caps the
+        # OpenAI client uses its 5-min default and a stuck tool-call parse loop
+        # on the model side can burn the whole budget on one request.
         import httpx
 
+        read_timeout = 120.0 if tier == "haiku" else 300.0
         http_client = httpx.AsyncClient(
-            timeout=httpx.Timeout(connect=10.0, read=90.0, write=10.0, pool=10.0)
+            timeout=httpx.Timeout(connect=10.0, read=read_timeout, write=10.0, pool=10.0)
         )
 
         name = (
