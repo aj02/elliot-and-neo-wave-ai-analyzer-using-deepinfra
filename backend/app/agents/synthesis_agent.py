@@ -134,11 +134,13 @@ def _filter_output(report: SynthesisReport) -> SynthesisReport:
 def _build_agent(model, system_prompt: str = SYNTHESIS_AGENT_SYSTEM_PROMPT):
     from pydantic_ai import Agent
 
+    # retries=0 — fail fast on validation errors. See elliott_agent.py for
+    # the rationale.
     return Agent(
         model=model,
         output_type=SynthesisReport,
         system_prompt=system_prompt,
-        retries=1,
+        retries=0,
         name="synthesis",
     )
 

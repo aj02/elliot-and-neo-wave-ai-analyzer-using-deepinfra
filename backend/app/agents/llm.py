@@ -123,6 +123,15 @@ def make_model(tier: ModelTier) -> tuple["Model", ModelHandle]:
             from pydantic_ai.models.openai import OpenAIModel  # type: ignore[no-redef]
         from pydantic_ai.providers.openai import OpenAIProvider
 
+        # Bound a single chat-completions HTTP call to 90s. Without this the
+        # OpenAI client uses its default (5min), which lets a hung tool-call
+        # parse loop on the model side burn the whole budget on one request.
+        import httpx
+
+        http_client = httpx.AsyncClient(
+            timeout=httpx.Timeout(connect=10.0, read=90.0, write=10.0, pool=10.0)
+        )
+
         name = (
             settings.deepinfra_model_fast
             if tier == "haiku"
@@ -131,6 +140,7 @@ def make_model(tier: ModelTier) -> tuple["Model", ModelHandle]:
         provider_inst = OpenAIProvider(
             base_url=settings.deepinfra_base_url,
             api_key=settings.deepinfra_api_key.get_secret_value(),
+            http_client=http_client,
         )
         return OpenAIModel(name, provider=provider_inst), ModelHandle(
             name=name,

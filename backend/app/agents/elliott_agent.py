@@ -59,11 +59,16 @@ def _build_agent(model, system_prompt: str = ELLIOTT_AGENT_SYSTEM_PROMPT):
     the module path don't need pydantic-ai installed."""
     from pydantic_ai import Agent
 
+    # retries=0 — fail fast on validation errors instead of retry-storms.
+    # Some open-weights models (Kimi-K2 in particular) emit tool-call output
+    # that fails strict schema validation; PydanticAI then retries with the
+    # previous response in context, which balloons cost and hits HTTP timeouts.
+    # The Validator filters malformed counts downstream anyway.
     return Agent(
         model=model,
         output_type=ElliottAgentOutput,
         system_prompt=system_prompt,
-        retries=1,
+        retries=0,
         name="elliott",
     )
 
